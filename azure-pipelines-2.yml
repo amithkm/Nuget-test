@@ -1,0 +1,39 @@
+# These steps restore and build a solution file
+# Requirements: run the nuget-config.yml step prior to this step, set $(ArtifactoryApiKey) as a secret variable via the UI
+# parameters:
+#   MainProjectDirectory - the directory of the main project in your solution
+#   Configuration - configuration to build from
+#   ProjectPath - project you want to build. Default value is the solution file.
+#   SolutionPath - path to the solution file for your repo
+
+parameters:
+  MainProjectDirectory: ''
+  Configuration: ''
+  ProjectPath: '**/*.sln'
+  SolutionPath: ''
+
+steps:
+- task: PowerShell@2
+  displayName: "Emit build details"
+  inputs:
+    targetType: 'inline'
+    script: |
+      $date = Get-Date -format "dd-MMM-yyyy HH:mm"
+      echo buildtime:$date >> .buildinfo 
+      echo commithash:$(Build.SourceVersion) >> .buildinfo 
+      echo buildid:$(Build.BuildId) >> .buildinfo
+    pwsh: true
+    failOnStderr: true
+    workingDirectory: '$(Build.SourcesDirectory)/${{ parameters.MainProjectDirectory }}'
+- task: NuGetCommand@2
+  displayName: 'Restore Packages'
+  inputs:
+    command: 'custom'
+    arguments: 'restore ${{ parameters.SolutionPath }} -Source "$(NUGET_PACKAGES);https://clouddsein.jfrog.io/artifactory/api/nuget/nuget;http://www.nuget.org/api/v2/"'
+- task: DotNetCoreCLI@2
+  displayName: 'Build Solution'
+  inputs:
+    command: 'build'
+    projects: '${{ parameters.ProjectPath }}'
+    arguments: '--no-restore --configuration ${{ parameters.Configuration }}'
+    configuration: '${{ parameters.Configuration }}'
