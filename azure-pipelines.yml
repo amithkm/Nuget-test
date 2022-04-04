@@ -23,7 +23,7 @@ steps:
 - task: ArtifactoryNuGet@2
   inputs:
     command: 'restore'
-    artifactoryService: 'vigneshs'
+    artifactoryService: 'clouddsein'
     targetResolveRepo: 'nuget'
     solutionPath: '**/*.sln'
     collectBuildInfo: true
