@@ -16,16 +16,20 @@ variables:
 
 steps:
 - task: NuGetToolInstaller@1
+  inputs:
+    versionSpec: '5.8.0'
+    checkLatest: true
+- task: NuGetCommand@2
+  inputs:
+    command: 'custom'
+    arguments: '''sources Add -Name clouddsein -Source https://clouddsein.jfrog.io/artifactory/api/nuget/nuget -username amith -password ${{ parameters.ArtifactoryApiKey }}'''
+    
+- task: NuGetCommand@2
+  inputs:
+    command: 'custom'
+    arguments: '''setapikey amith:${{ parameters.ArtifactoryApiKey }} -Source clouddsein'''
 
 - task: NuGetCommand@2
   inputs:
-    restoreSolution: '$(solution)'
-- task: ArtifactoryNuGet@2
-  inputs:
-    command: 'restore'
-    artifactoryService: 'clouddsein'
-    targetResolveRepo: 'nuget'
-    solutionPath: '**/*.sln'
-    collectBuildInfo: true
-    buildName: '$(Build.DefinitionName)'
-    buildNumber: '$(Build.BuildNumber)'
+    command: 'custom'
+    arguments: '''restore ${{ parameters.SolutionPath }} -Source "$(NUGET_PACKAGES);https://clouddsein.jfrog.io/artifactory/api/nuget/nuget;http://www.nuget.org/api/v2/"'''
